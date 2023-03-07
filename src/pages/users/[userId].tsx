@@ -1,4 +1,10 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import NoPostsAnimation from "@public/static/ghost.json";
 import { trpc } from "@utils/trpc";
 import MainLayout from "@components/MainLayout";
@@ -8,14 +14,21 @@ import PostCard from "@components/PostCard";
 import Image from "next/image";
 import ShouldRender from "@components/ShouldRender";
 import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import MetaTags from "@components/MetaTags";
 import useGetDate from "src/hooks/useGetDate";
+
+import { IoMdSettings } from "react-icons/io";
 
 import useFilterPosts from "src/hooks/useFilterPosts";
 import Tab from "@components/Tab";
 
 import Link from "next/link";
+import ConfirmationModal from "@components/ConfirmationModal";
+import { toast } from "react-toastify";
+import getUserDisplayName from "@utils/getUserDisplayName";
+import Popup from "@components/Popup";
+import UserPopupContent from "@components/UserPopupContent";
 
 const LOTTIE_OPTIONS = {
   loop: true,
@@ -27,19 +40,27 @@ const UserPage: React.FC = () => {
   const { currentFilter, filterLabels, filters, toggleFilter } =
     useFilterPosts();
 
+  const { data: session } = useSession();
   const router = useRouter();
   const userId = router.query.userId as string;
-  const { data: session } = useSession();
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const reachedBottom = useOnScreen(bottomRef);
 
-  const { data: user } = trpc.useQuery([
-    "users.single-post",
+  const { data: user } = trpc.useQuery(
+    [
+      "users.single-post",
+      {
+        userId,
+      },
+    ],
     {
-      userId,
-    },
-  ]);
+      onSuccess(data) {
+        // if user not found, 404
+        if (!data?.id) router.push("/404");
+      },
+    }
+  );
 
   const { date, toggleDateType } = useGetDate(user?.createdAt);
 
@@ -64,8 +85,37 @@ const UserPage: React.FC = () => {
   );
 
   const noDataToShow = !isLoading && !dataToShow?.length && !hasNextPage;
-
   const loadingArray = Array.from<undefined>({ length: 4 });
+
+  const isModalOpen = useState(false);
+  const [, setIsModalOpen] = isModalOpen;
+
+  const showDeleteConfirm = useCallback(() => {
+    setIsModalOpen(true);
+  }, [setIsModalOpen]);
+
+  const {
+    mutate,
+    error: deleteError,
+    isLoading: deleting,
+  } = trpc.useMutation(["users.delete-user"], {
+    onSuccess: () => {
+      setIsModalOpen(false);
+      signOut({
+        redirect: false,
+      });
+
+      setTimeout(() => {
+        router.push("/");
+      }, 500);
+    },
+  });
+
+  const onConfirm = useCallback(() => {
+    if (!!session?.user?.id) {
+      mutate({ userId: session.user.id });
+    }
+  }, [mutate, session]);
 
   useEffect(() => {
     if (reachedBottom && hasNextPage) {
@@ -74,11 +124,18 @@ const UserPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reachedBottom]);
 
+  useEffect(() => {
+    if (deleteError) toast.error(deleteError?.message);
+  }, [deleteError]);
+
   return (
     <>
-      <MetaTags title={user?.name as string} image={user?.image as string} />
+      <MetaTags
+        title={getUserDisplayName(user)}
+        image={user?.image || "/static/default-profile.jpg"}
+      />
       <MainLayout>
-        <section className="mx-auto flex flex-col items-center gap-5 mt-10">
+        <section className="relative mx-auto w-full flex flex-col items-center gap-5 mt-10">
           <Image
             src={user?.image || "/static/default-profile.jpg"}
             width={240}
@@ -87,9 +144,9 @@ const UserPage: React.FC = () => {
             alt={user?.name as string}
           />
           <div className="text-center w-64">
-            <ShouldRender if={!!user?.name}>
+            <ShouldRender if={!!user}>
               <p className="text-xl">
-                {user?.name}{" "}
+                {getUserDisplayName(user)}{" "}
                 <ShouldRender if={session?.user?.id === userId}>
                   <span className="text-emerald-700 dark:text-emerald-500">
                     {" "}
@@ -113,6 +170,21 @@ const UserPage: React.FC = () => {
               </p>
             </ShouldRender>
           </div>
+          <button className="absolute bottom-0 right-0" type="button">
+            <Popup
+              icon={
+                <IoMdSettings
+                  size={20}
+                  className="hover:opacity-80 text-black dark:text-white"
+                />
+              }
+            >
+              <UserPopupContent
+                userCanEditAccount={!!user && !user?.name}
+                onClickDeleteAccount={showDeleteConfirm}
+              />
+            </Popup>
+          </button>
         </section>
 
         <section className="w-full">
@@ -162,6 +234,15 @@ const UserPage: React.FC = () => {
 
         <div ref={bottomRef} />
       </MainLayout>
+
+      <ConfirmationModal
+        description="This action is permanent and cannot be undone!"
+        title="Are you sure you want to delete your account?"
+        confirmationLabel="Delete my account"
+        openState={isModalOpen}
+        loading={deleting}
+        onConfirm={onConfirm}
+      />
     </>
   );
 };
