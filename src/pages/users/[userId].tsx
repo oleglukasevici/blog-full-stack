@@ -266,6 +266,7 @@ const UserPage: React.FC = () => {
       <EditAccountModal
         openState={isEditAccountModalOpen}
         onClose={toggleEditModal(false)}
+        user={user}
       />
     </>
   );
