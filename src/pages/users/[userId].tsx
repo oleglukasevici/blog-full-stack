@@ -27,8 +27,8 @@ import Link from "next/link";
 import ConfirmationModal from "@components/ConfirmationModal";
 import { toast } from "react-toastify";
 import getUserDisplayName from "@utils/getUserDisplayName";
-import Popup from "@components/Popup";
-import UserPopupContent from "@components/UserPopupContent";
+import Popover from "@components/Popover";
+import UserPopoverContent from "@components/UserPopoverContent";
 import EditAccountModal from "@components/EditAccountModal";
 
 const LOTTIE_OPTIONS = {
@@ -161,7 +161,7 @@ const UserPage: React.FC = () => {
                 className="absolute bottom-0 right-10 bg-emerald-500 rounded-full flex justify-center items-center p-2 shadow-2xl"
                 type="button"
               >
-                <Popup
+                <Popover
                   icon={
                     <IoMdSettings
                       size={23}
@@ -169,11 +169,11 @@ const UserPage: React.FC = () => {
                     />
                   }
                 >
-                  <UserPopupContent
+                  <UserPopoverContent
                     onClickDeleteAccount={showDeleteConfirm}
                     openEditAccountModal={toggleEditModal(true)}
                   />
-                </Popup>
+                </Popover>
               </button>
             </ShouldRender>
           </div>
