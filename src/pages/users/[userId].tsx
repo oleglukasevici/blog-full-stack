@@ -8,7 +8,7 @@ import React, {
 import NoPostsAnimation from "@public/static/ghost.json";
 import { trpc } from "@utils/trpc";
 import MainLayout from "@components/MainLayout";
-import useOnScreen from "src/hooks/useOnScreen";
+import useOnScreen from "@hooks/useOnScreen";
 import Lottie from "react-lottie";
 import PostCard from "@components/PostCard";
 import Image from "next/image";
@@ -21,6 +21,7 @@ import useGetDate from "src/hooks/useGetDate";
 import { IoMdSettings } from "react-icons/io";
 
 import useFilterPosts from "src/hooks/useFilterPosts";
+
 import Tab from "@components/Tab";
 
 import Link from "next/link";
