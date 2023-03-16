@@ -264,7 +264,7 @@ const UserPage: React.FC = () => {
                   <Popover.Item
                     title="Edit account"
                     icon={<MdEditNote size={21} className="text-emerald-500" />}
-                    subtitle="Change your name and bio."
+                    subtitle="Change your avatar & details"
                     onClick={toggleEditModal(true)}
                   />
 
@@ -272,7 +272,7 @@ const UserPage: React.FC = () => {
                     title="Delete account"
                     gap="1"
                     icon={<MdDelete size={18} className="text-emerald-500" />}
-                    subtitle="Delete your account."
+                    subtitle="Delete your account"
                     onClick={showDeleteConfirm}
                   />
 
@@ -286,7 +286,7 @@ const UserPage: React.FC = () => {
                           className="text-emerald-500"
                         />
                       }
-                      subtitle="Read our code of conduct."
+                      subtitle="Read our code of conduct"
                     />
                   </Link>
 
@@ -300,7 +300,7 @@ const UserPage: React.FC = () => {
                           className="text-emerald-500"
                         />
                       }
-                      subtitle="Read our privacy terms."
+                      subtitle="Read our privacy terms"
                     />
                   </Link>
                 </Popover.Main>
