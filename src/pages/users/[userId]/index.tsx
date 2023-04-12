@@ -69,6 +69,9 @@ const UserPage: React.FC = () => {
   const userIsProfileOwner =
     !!session?.user?.id && userId === session?.user?.id;
 
+  const redirectToTerms = (value: "privacy" | "conduct") => () =>
+    router.push(`/terms/${value}`);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const reachedBottom = useOnScreen(bottomRef);
 
@@ -304,33 +307,31 @@ const UserPage: React.FC = () => {
                     onClick={showDeleteConfirm}
                   />
 
-                  <Link href="/terms/conduct">
-                    <Popover.Item
-                      title="Code of conduct"
-                      gap="2"
-                      icon={
-                        <MdOutlineTextSnippet
-                          size={16}
-                          className="text-emerald-500"
-                        />
-                      }
-                      subtitle="Read our code of conduct"
-                    />
-                  </Link>
+                  <Popover.Item
+                    title="Code of conduct"
+                    gap="2"
+                    icon={
+                      <MdOutlineTextSnippet
+                        size={16}
+                        className="text-emerald-500"
+                      />
+                    }
+                    subtitle="Read our code of conduct"
+                    onClick={redirectToTerms("conduct")}
+                  />
 
-                  <Link href="/terms/privacy">
-                    <Popover.Item
-                      title="Privacy Policy"
-                      gap="2"
-                      icon={
-                        <MdOutlineTextSnippet
-                          size={16}
-                          className="text-emerald-500"
-                        />
-                      }
-                      subtitle="Read our privacy terms"
-                    />
-                  </Link>
+                  <Popover.Item
+                    title="Privacy Policy"
+                    gap="2"
+                    icon={
+                      <MdOutlineTextSnippet
+                        size={16}
+                        className="text-emerald-500"
+                      />
+                    }
+                    subtitle="Read our privacy terms"
+                    onClick={redirectToTerms("privacy")}
+                  />
                 </Popover.Main>
               </div>
             </ShouldRender>
