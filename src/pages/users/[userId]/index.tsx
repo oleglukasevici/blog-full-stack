@@ -1,14 +1,6 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { trpc } from "@utils/trpc";
 import MainLayout from "@components/MainLayout";
-import useOnScreen from "@hooks/useOnScreen";
-import PostCard from "@components/PostCard";
 import Image from "next/future/image";
 import ShouldRender from "@components/ShouldRender";
 import { useRouter } from "next/router";
@@ -29,13 +21,15 @@ import getUserDisplayName from "@utils/getUserDisplayName";
 import Popover from "@components/Popover";
 import dynamic from "next/dynamic";
 import { MdDelete, MdEditNote, MdOutlineTextSnippet } from "react-icons/md";
-import EmptyMessage from "@components/EmptyMessage";
 import { User } from "@utils/types";
 import Skeleton from "@components/Skeleton";
 import UserLinkPreview from "@components/EditAccountModal/UserLink/UserLinkPreview";
 import Button from "@components/Button";
-import Comment from "@components/Comment";
 import clsx from "clsx";
+
+const UserPageList = dynamic(() => import("@components/UserPageList"), {
+  ssr: false,
+});
 
 const FollowersModal = dynamic(
   () => import("@components/Follows/FollowersModal"),
@@ -82,10 +76,6 @@ const UserPage: React.FC = () => {
   const redirectToTerms = (value: "privacy" | "conduct") => () =>
     router.push(`/terms/${value}`);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
-  const reachedBottom = useOnScreen(bottomRef);
-  const loadingArray = Array.from<undefined>({ length: 4 });
-
   const { data: user, isLoading: loadingUser } = trpc.useQuery(
     [
       "users.single-user",
@@ -102,67 +92,6 @@ const UserPage: React.FC = () => {
   );
 
   const { date, toggleDateType } = useGetDate(user?.createdAt);
-
-  const {
-    data: userComments,
-    isLoading: loadingComments,
-    isFetchingNextPage: fetchingMoreComments,
-    hasNextPage: hasMoreComments,
-    fetchNextPage: fetchMoreComments,
-  } = trpc.useInfiniteQuery(
-    [
-      "comments.user-comments",
-      {
-        userId,
-        limit: 4,
-        filter: currentFilter,
-      },
-    ],
-    {
-      getNextPageParam: (lastPage) => lastPage.nextCursor,
-      ssr: false,
-      enabled: isCommentsTab,
-    }
-  );
-
-  const commentsToShow = useMemo(
-    () => userComments?.pages.flatMap((page) => page.comments),
-    [userComments]
-  );
-
-  const noCommentsToShow =
-    !loadingComments && !commentsToShow?.length && !hasMoreComments;
-
-  const {
-    data,
-    isLoading: loadingPosts,
-    fetchNextPage: fetchMorePosts,
-    isFetchingNextPage: isFetchingMorePosts,
-    hasNextPage: hasMorePosts,
-  } = trpc.useInfiniteQuery(
-    [
-      "posts.posts",
-      {
-        userId,
-        limit: 4,
-        filter: currentFilter,
-      },
-    ],
-    {
-      enabled: isPostsTab,
-      getNextPageParam: (lastPage) => lastPage.nextCursor,
-      // The initial focus of this page is the user, so the
-      // user's comments can load afterwards.
-      ssr: false,
-    }
-  );
-
-  const dataToShow = useMemo(
-    () => data?.pages.flatMap((page) => page.posts),
-    [data]
-  );
-
-  const noPostsToShow = !loadingPosts && !dataToShow?.length && !hasMorePosts;
 
   const isDeleteAccountModalOpen = useState(false);
   const [, setIsDeleteAccountModalOpen] = isDeleteAccountModalOpen;
@@ -182,7 +111,7 @@ const UserPage: React.FC = () => {
   );
 
   const {
-    mutate,
+    mutate: deleteUser,
     error: deleteError,
     isLoading: deleting,
   } = trpc.useMutation(["users.delete-user"], {
@@ -279,20 +208,9 @@ const UserPage: React.FC = () => {
 
   const onConfirm = useCallback(() => {
     if (!!session?.user?.id) {
-      mutate({ userId: session.user.id });
+      deleteUser({ userId: session.user.id });
     }
-  }, [mutate, session]);
-
-  useEffect(() => {
-    if (reachedBottom && hasMorePosts && isPostsTab) {
-      fetchMorePosts();
-    }
-
-    if (reachedBottom && hasMoreComments && isCommentsTab) {
-      fetchMoreComments();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reachedBottom]);
+  }, [deleteUser, session]);
 
   useEffect(() => {
     if (deleteError) toast.error("Error deleting your account.");
@@ -318,7 +236,7 @@ const UserPage: React.FC = () => {
             />
             <ShouldRender if={!userIsProfileOwner && session?.user?.id}>
               <Button
-                disabled={loadingPosts}
+                disabled={loadingUser}
                 variant="gradient"
                 onClick={handleClickFollowButton}
                 absolute
@@ -517,8 +435,6 @@ const UserPage: React.FC = () => {
             </ShouldRender>
           </div>
         </section>
-
-        <div ref={bottomRef} />
       </MainLayout>
 
       <ConfirmationModal
