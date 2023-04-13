@@ -121,6 +121,7 @@ const UserPage: React.FC = () => {
     {
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       ssr: false,
+      enabled: isCommentsTab,
     }
   );
 
@@ -148,6 +149,7 @@ const UserPage: React.FC = () => {
       },
     ],
     {
+      enabled: isPostsTab,
       getNextPageParam: (lastPage) => lastPage.nextCursor,
       // The initial focus of this page is the user, so the
       // user's comments can load afterwards.
