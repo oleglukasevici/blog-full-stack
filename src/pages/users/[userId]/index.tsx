@@ -34,6 +34,8 @@ import { User } from "@utils/types";
 import Skeleton from "@components/Skeleton";
 import UserLinkPreview from "@components/EditAccountModal/UserLink/UserLinkPreview";
 import Button from "@components/Button";
+import Comment from "@components/Comment";
+import clsx from "clsx";
 
 const FollowersModal = dynamic(
   () => import("@components/Follows/FollowersModal"),
@@ -64,6 +66,13 @@ const UserPage: React.FC = () => {
   const { currentFilter, filterLabels, filters, toggleFilter } =
     useFilterPosts();
 
+  const [currentTab, setCurrentTab] = useState<"posts" | "comments">("posts");
+
+  const isPostsTab = currentTab === "posts";
+  const isCommentsTab = currentTab === "comments";
+
+  const toggleTab = (value: "posts" | "comments") => () => setCurrentTab(value);
+
   const { data: session } = useSession();
   const router = useRouter();
   const userId = router.query.userId as string;
@@ -75,6 +84,7 @@ const UserPage: React.FC = () => {
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const reachedBottom = useOnScreen(bottomRef);
+  const loadingArray = Array.from<undefined>({ length: 4 });
 
   const { data: user, isLoading: loadingUser } = trpc.useQuery(
     [
@@ -93,31 +103,64 @@ const UserPage: React.FC = () => {
 
   const { date, toggleDateType } = useGetDate(user?.createdAt);
 
-  const { data, isLoading, fetchNextPage, isFetchingNextPage, hasNextPage } =
-    trpc.useInfiniteQuery(
-      [
-        "posts.posts",
-        {
-          userId,
-          limit: 4,
-          filter: currentFilter,
-        },
-      ],
+  const {
+    data: userComments,
+    isLoading: loadingComments,
+    isFetchingNextPage: fetchingMoreComments,
+    hasNextPage: hasMoreComments,
+    fetchNextPage: fetchMoreComments,
+  } = trpc.useInfiniteQuery(
+    [
+      "comments.user-comments",
       {
-        getNextPageParam: (lastPage) => lastPage.nextCursor,
-        // The initial focus of this page is the user, so the
-        // user's posts can load afterwards.
-        ssr: false,
-      }
-    );
+        userId,
+        limit: 4,
+        filter: currentFilter,
+      },
+    ],
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      ssr: false,
+    }
+  );
+
+  const commentsToShow = useMemo(
+    () => userComments?.pages.flatMap((page) => page.comments),
+    [userComments]
+  );
+
+  const noCommentsToShow =
+    !loadingComments && !commentsToShow?.length && !hasMoreComments;
+
+  const {
+    data,
+    isLoading: loadingPosts,
+    fetchNextPage: fetchMorePosts,
+    isFetchingNextPage: isFetchingMorePosts,
+    hasNextPage: hasMorePosts,
+  } = trpc.useInfiniteQuery(
+    [
+      "posts.posts",
+      {
+        userId,
+        limit: 4,
+        filter: currentFilter,
+      },
+    ],
+    {
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      // The initial focus of this page is the user, so the
+      // user's comments can load afterwards.
+      ssr: false,
+    }
+  );
 
   const dataToShow = useMemo(
     () => data?.pages.flatMap((page) => page.posts),
     [data]
   );
 
-  const noDataToShow = !isLoading && !dataToShow?.length && !hasNextPage;
-  const loadingArray = Array.from<undefined>({ length: 4 });
+  const noPostsToShow = !loadingPosts && !dataToShow?.length && !hasMorePosts;
 
   const isDeleteAccountModalOpen = useState(false);
   const [, setIsDeleteAccountModalOpen] = isDeleteAccountModalOpen;
@@ -239,8 +282,12 @@ const UserPage: React.FC = () => {
   }, [mutate, session]);
 
   useEffect(() => {
-    if (reachedBottom && hasNextPage) {
-      fetchNextPage();
+    if (reachedBottom && hasMorePosts && isPostsTab) {
+      fetchMorePosts();
+    }
+
+    if (reachedBottom && hasMoreComments && isCommentsTab) {
+      fetchMoreComments();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reachedBottom]);
@@ -269,7 +316,7 @@ const UserPage: React.FC = () => {
             />
             <ShouldRender if={!userIsProfileOwner && session?.user?.id}>
               <Button
-                disabled={isLoading}
+                disabled={loadingPosts}
                 variant="gradient"
                 onClick={handleClickFollowButton}
                 absolute
@@ -353,32 +400,32 @@ const UserPage: React.FC = () => {
               <button
                 className="flex cursor-pointer flex-col items-center"
                 onClick={() => setOpenFollowersModal(true)}
-                disabled={isLoading}
+                disabled={loadingUser}
               >
                 <p className="prose-base text-neutral-600 hover:underline hover:brightness-125 dark:text-neutral-400">
                   Followers
                 </p>
-                <ShouldRender if={!isLoading}>
+                <ShouldRender if={!loadingUser}>
                   <p>{user?._count?.followers}</p>
                 </ShouldRender>
-                <ShouldRender if={isLoading}>
+                <ShouldRender if={loadingUser}>
                   <Skeleton width="w-6" />
                 </ShouldRender>
               </button>
 
               <button
-                disabled={isLoading}
+                disabled={loadingUser}
                 className="flex cursor-pointer flex-col items-center"
                 onClick={() => setOpenFollowingModal(true)}
               >
                 <p className="prose-base text-neutral-600 hover:underline hover:brightness-125 dark:text-neutral-400">
                   Following
                 </p>
-                <ShouldRender if={!isLoading}>
+                <ShouldRender if={!loadingUser}>
                   <p>{user?._count?.following}</p>
                 </ShouldRender>
 
-                <ShouldRender if={isLoading}>
+                <ShouldRender if={loadingUser}>
                   <Skeleton width="w-6" />
                 </ShouldRender>
               </button>
@@ -426,6 +473,7 @@ const UserPage: React.FC = () => {
               ))}
             </div>
           </div>
+
           <div className="w-full flex flex-col gap-10">
             {(isLoading ? loadingArray : dataToShow)?.map((post, i) => (
               <PostCard
@@ -434,13 +482,36 @@ const UserPage: React.FC = () => {
                 loading={isLoading}
               />
             ))}
+              <ShouldRender if={isFetchingMorePosts}>
+                <PostCard loading />
+              </ShouldRender>
 
-            <ShouldRender if={isFetchingNextPage}>
-              <PostCard loading />
+              <ShouldRender if={noPostsToShow}>
+                <EmptyMessage message="Hmm. It seems that this user has not created any posts yet." />
+              </ShouldRender>
             </ShouldRender>
 
-            <ShouldRender if={noDataToShow}>
-              <EmptyMessage message="Hmm. It seems that this user has not created any posts yet." />
+            <ShouldRender if={isCommentsTab}>
+              {(loadingComments ? loadingArray : commentsToShow)?.map(
+                (comment, i) => (
+                  <Comment
+                    comment={comment}
+                    key={loadingComments ? i : comment?.id}
+                    loading={loadingComments}
+                    hideReplies
+                    variant="outlined"
+                    linkToPost
+                  />
+                )
+              )}
+
+              <ShouldRender if={fetchingMoreComments}>
+                <Comment loading linkToPost variant="outlined" />
+              </ShouldRender>
+
+              <ShouldRender if={noCommentsToShow}>
+                <EmptyMessage message="Hmm. It seems that this user has not commented on any posts yet." />
+              </ShouldRender>
             </ShouldRender>
           </div>
         </section>
