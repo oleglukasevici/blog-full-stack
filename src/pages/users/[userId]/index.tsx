@@ -84,7 +84,7 @@ const UserPage: React.FC = () => {
       },
     ],
     {
-      onSuccess(data) {
+      onSettled(data) {
         // if user not found, 404
         if (!data?.id) router.push("/404");
       },
