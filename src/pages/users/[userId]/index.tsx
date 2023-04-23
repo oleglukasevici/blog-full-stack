@@ -6,6 +6,7 @@ import ShouldRender from "@components/ShouldRender";
 import { useRouter } from "next/router";
 import { signOut, useSession } from "next-auth/react";
 import MetaTags from "@components/MetaTags";
+
 import useGetDate from "src/hooks/useGetDate";
 
 import { IoMdSettings } from "react-icons/io";
@@ -100,8 +101,6 @@ const UserPage: NextPage<
       },
     }
   );
-
-  const { date, toggleDateType } = useGetDate(user?.createdAt);
 
   const isDeleteAccountModalOpen = useState(false);
   const [, setIsDeleteAccountModalOpen] = isDeleteAccountModalOpen;
@@ -372,16 +371,7 @@ const UserPage: NextPage<
               </ShouldRender>
               <ShouldRender if={!!user?.createdAt}>
                 <p className="mt-2 text-neutral-800 dark:text-neutral-400 dark:opacity-80">
-                  Member since{" "}
-                  <span
-                    onClick={toggleDateType}
-                    className="cursor-pointer select-none"
-                    role="button"
-                    aria-label="Change date visualization type"
-                    title="Change date visualization type"
-                  >
-                    {date}
-                  </span>
+                  Member since <span>{user?.createdAt}</span>
                 </p>
               </ShouldRender>
             </div>
