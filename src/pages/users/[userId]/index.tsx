@@ -33,6 +33,8 @@ import {
   NextPage,
 } from "next";
 import { Badge } from "@components/Badge";
+import AnimatedTabs from "@components/AnimatedTabs";
+import { useTabs } from "@hooks/useTabs";
 
 const UserPageList = dynamic(() => import("@components/UserPageList"), {
   ssr: false,
@@ -68,15 +70,25 @@ const UserPage: NextPage<
 > = (props) => {
   const { userId } = props;
 
-  const { currentFilter, filterLabels, filters, toggleFilter } =
-    useFilterPosts();
+  const { selectedTab: currentFilter, tabProps: filterTabsProps } =
+    useFilterContent();
 
-  const [currentTab, setCurrentTab] = useState<"posts" | "comments">("posts");
+  const [typesTabs] = useState({
+    tabs: [
+      {
+        label: "Posts",
+        id: "posts",
+      },
+      {
+        label: "Comments",
+        id: "comments",
+      },
+    ],
+    initialTabId: "posts",
+  });
 
-  const isPostsTab = currentTab === "posts";
-  const isCommentsTab = currentTab === "comments";
-
-  const toggleTab = (value: "posts" | "comments") => () => setCurrentTab(value);
+  const tabs = useTabs(typesTabs);
+  const { selectedTab: currentType, tabProps: typeTabsProps } = tabs;
 
   const { data: session } = useSession();
   const router = useRouter();
@@ -443,8 +455,7 @@ const UserPage: NextPage<
           </div>
         </section>
       </MainLayout>
-
-      <ConfirmationModal
+     <ConfirmationModal
         title="Are you sure you want to delete your account?"
         confirmationLabel="Delete my account"
         openState={isDeleteAccountModalOpen}
