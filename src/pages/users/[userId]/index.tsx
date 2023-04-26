@@ -70,10 +70,7 @@ const UserPage: NextPage<
 > = (props) => {
   const { userId } = props;
 
-  const { selectedTab: currentFilter, tabProps: filterTabsProps } =
-    useFilterContent();
-
-  const [typesTabs] = useState({
+  const [tabs] = useState({
     tabs: [
       {
         label: "Posts",
@@ -87,8 +84,7 @@ const UserPage: NextPage<
     initialTabId: "posts",
   });
 
-  const tabs = useTabs(typesTabs);
-  const { selectedTab: currentType, tabProps: typeTabsProps } = tabs;
+  const { selectedTab, tabProps } = useTabs(tabs);
 
   const { data: session } = useSession();
   const router = useRouter();
