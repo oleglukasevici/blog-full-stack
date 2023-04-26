@@ -246,7 +246,9 @@ const UserPage: NextPage<
             className="h-[240px] w-[240px] rounded-full object-cover"
             alt={user?.name as string}
           />
-          <ShouldRender if={!loggedUserIsProfileOwner && session?.user?.id}>
+          <ShouldRender
+            if={!loggedUserIsProfileOwner && session?.user?.id && !!user}
+          >
             <Button
               loading={loadingUser}
               variant="gradient"
