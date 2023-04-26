@@ -248,7 +248,7 @@ const UserPage: NextPage<
           />
           <ShouldRender if={!loggedUserIsProfileOwner && session?.user?.id}>
             <Button
-              disabled={loadingUser}
+              loading={loadingUser}
               variant="gradient"
               onClick={handleClickFollowButton}
               absolute
