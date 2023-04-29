@@ -80,6 +80,10 @@ const UserPage: NextPage<
         label: "Comments",
         id: "comments",
       },
+      {
+        label: "Likes",
+        id: "liked",
+      },
     ],
     initialTabId: "posts",
   });
