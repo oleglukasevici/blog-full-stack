@@ -211,7 +211,7 @@ const UserPage: NextPage<
           "users.get-followers",
           {
             userId,
-            limit: 15,
+            limit: 10,
           },
         ]);
 
@@ -219,7 +219,7 @@ const UserPage: NextPage<
           "users.get-following",
           {
             userId,
-            limit: 15,
+            limit: 10,
           },
         ]);
       },
