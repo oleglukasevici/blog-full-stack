@@ -2,8 +2,6 @@
 
 
 
-### Deployed to Vercel on https://t3-blog-pi.vercel.app/
-
 This is a fullstack blog application made with the [T3 Stack](https://create.t3.gg/). 
 
 Aditionally, I used [AWS S3](https://aws.amazon.com/s3/) Buckets for file uploads, with presigned urls for securely accessing the stored files, ensuring they are safe and private.
@@ -66,7 +64,7 @@ By dynamic importing and code-splitting, the initial JS loaded on page-load was 
 
 
 
-I also leveraged the Next.JS node server for processsing markdown and formatting all dates on the server-side, instead of doing it on the client. I also truncate the HTML (Limit it to 250 characters) on the server to reduce the size of the DOM tree and avoid sending unnecessary HTML to the client. It is also parsed before being sent to the client, adjusting for Search Engine Optimizations. [Read more here.](https://github.com/leojuriolli7/t3-blog/commit/2ce73b4df034c05180211aac07c70a4323a7cf1e#diff-1ee892b507c8886a683fe2e7011d58a1eb69dd233ceb47fc65ad62d8e97e1f9eR30-R56)
+I also leveraged the Next.JS node server for processsing markdown and formatting all dates on the server-side, instead of doing it on the client. I also truncate the HTML (Limit it to 250 characters) on the server to reduce the size of the DOM tree and avoid sending unnecessary HTML to the client. It is also parsed before being sent to the client, adjusting for Search Engine Optimizations.
 
 
 ### Processing markdown on the server
@@ -75,7 +73,7 @@ Another important UX improvement was when I switched from converting markdown to
 
 I could notice whenever I first loaded the site, or scrolled down to load new posts, the page would slow down/crash for a bit, presumably to process & convert the markdown text it was receiving. This poor UX was fixed with this change.  **This contributed to a huge boost in the performance scores of the website:**
 
-#### The pull request: [Refactor: Process markdown on the server](https://github.com/leojuriolli7/t3-blog/pull/21)
+#### The pull request: [Refactor: Process markdown on the server]
 
 | Parsing markdown on the client | After parsing markdown on the server |
 |--------|--------|
@@ -89,14 +87,9 @@ This project is deployed on Vercel with Serverless Functions. This means every t
 
 As the website grew, and so did the amount of tRPC routers and dependencies, the cold-starts got to 7-10 seconds. To solve this, I split all the tRPC routers into their own serverless functions, meaning they could load up individually and on-demand (and in parallel), instead of loading everything at once.
 
-[Here is the Pull Request.](https://github.com/leojuriolli7/t3-blog/pull/40)
+[Here is the Pull Request.]
 
-Another necessary change to counteract cold-starts was to [lazy-load all tRPC procedures.](https://github.com/leojuriolli7/t3-blog/pull/41)
-
-| Before                                                                                                                             | After                                                                                                                                 |
-| ------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Screenshot from 2023-06-24 21-43-30](https://github.com/leojuriolli7/t3-blog/assets/100495707/09eae191-624f-4572-bb9c-0123d7744f01) | ![Screenshot from 2023-06-24 21-42-57](https://github.com/leojuriolli7/t3-blog/assets/100495707/55178e5b-9f65-4169-abba-c762c79f12d6) |
-
+Another necessary change to counteract cold-starts was to [lazy-load all tRPC procedures.]
 
 ### File uploads
 tRPC [does not support `multipart/form-data`](https://github.com/trpc/trpc/discussions/658#discussioncomment-998746), so file uploads could not be done reliably inside the tRPC router. For that reason, I decided to use the AWS SDK, S3 buckets and presigned URLs, a very safe and reliable method of uploading files. 
@@ -107,8 +100,6 @@ In this case, the tRPC router is only responsible with creating presigned URLs f
 Next.js has a very effective and powerful image caching when using their `next/image` component. However, this can be an issue when updating an image without changing its url, like for example, updating a user's profile picture, the url is the same, but the content has changed. Next.js is not able to identify the change. 
 
 To counteract this, every time an image is updated, a timestamp is appended to its url, to ensure the path will be different and the cache will be invalidated immediately. Eg: `bucket-url/user-id/avatar?1231903109` 
-
-[See more on the commit.](https://github.com/leojuriolli7/t3-blog/commit/67145e0c2e8ee7c0d531d392a8d4191df31b293e)
 
 ## Run the project
 ### Environment variables:
